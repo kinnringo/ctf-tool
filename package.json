@@ -1,0 +1,48 @@
+{
+  "name": "ctf-tool",
+  "version": "1.0.0",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:electron": "wait-on http://localhost:5173 && tsc -p tsconfig.electron.json && electron dist/electron/main.js",
+    "dev": "concurrently -n \"FRONT,ELEC\" -c \"magenta,blue\" \"npm run dev:frontend\" \"npm run dev:electron\"",
+    "prebuild": "npm run build:electron && cd frontend && npm run build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "package": "npm run prebuild && electron-builder build"
+  },
+  "build": {
+    "appId": "com.ctftool.app",
+    "productName": "CTF Tool",
+    "directories": {
+      "output": "release_build"
+    },
+    "files": [
+      "dist/**/*",
+      "frontend/dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/dist/api.exe",
+        "to": "api.exe"
+      }
+    ],
+    "win": {
+      "target": "dir"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.3"
+  }
+}

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+backend/venv/
+
+# Build Output
+dist/
+release/
+release_build/
+frontend/dist/
+backend/build/
+backend/dist/
+
+# Python
+backend/__pycache__/
+*.py[cod]
+*.spec
+
+# System Files
+.DS_Store
+Thumbs.db
+*.log
+
+# User Specific
+初期構想/
+その他/
