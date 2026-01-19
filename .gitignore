@@ -19,7 +19,7 @@ backend/__pycache__/
 .DS_Store
 Thumbs.db
 *.log
+build_log.txt
 
 # User Specific
-初期構想/
-その他/
+others/
