@@ -57,23 +57,3 @@ A versatile implementation of CTF (Capture The Flag) assist tools, combining a m
     ```
     Output will be in `release_build/win-unpacked`.
 
-## Sharing Source Code
-
-To share this project on GitHub or other platforms:
-
-1. **Exclude**:
-   - `node_modules/`
-   - `release/`, `release_build/`
-   - `dist/`, `frontend/dist/`
-   - `backend/venv/`
-   - `backend/build/`, `backend/dist/`
-   - `.git/` (if copying manually)
-   - Personal/Work folders (e.g., `初期構想`, `その他`) if they contain sensitive info.
-
-2. **Include**:
-   - `electron/`
-   - `frontend/` (src, public, config files)
-   - `backend/` (source code, requirements.txt)
-   - `package.json`, `tsconfig.json` etc.
-   - `README.md`
-   - `.gitignore`
