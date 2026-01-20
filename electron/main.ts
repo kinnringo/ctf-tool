@@ -92,7 +92,6 @@ async function createWindow() {
     if (isDev) {
         // Wait for Vite to be ready? usually concurrently handles this or we just retry
         await mainWindow.loadURL('http://localhost:5173');
-        mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, '..', '..', 'frontend', 'dist', 'index.html'));
     }
