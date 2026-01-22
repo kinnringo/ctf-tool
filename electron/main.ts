@@ -67,10 +67,19 @@ function startPythonSubprocess() {
 }
 
 // Kill Python Backend
+// Kill Python Backend
 function killPythonSubprocess() {
     if (pythonProcess) {
         console.log('Killing Python process...');
-        pythonProcess.kill();
+        if (process.platform === 'win32') {
+            try {
+                child_process.execSync(`taskkill /pid ${pythonProcess.pid} /f /t`);
+            } catch (e) {
+                console.error('Failed to kill python process:', e);
+            }
+        } else {
+            pythonProcess.kill();
+        }
         pythonProcess = null;
     }
 }
