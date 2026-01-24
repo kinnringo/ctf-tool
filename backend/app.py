@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 import sys
 import base64
 # Import feature logic
@@ -125,6 +126,19 @@ def forensics_scan(payload: Payload):
         return {"result": scan_results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class MetadataRequest(BaseModel):
+    data: str
+    file_path: Optional[str] = None
+
+@app.post("/forensics/metadata")
+async def forensics_metadata(req: MetadataRequest):
+    try:
+        raw_data = base64.b64decode(req.data)
+        result = file_info.run_metadata(raw_data, req.file_path)
+        return {"result": result}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

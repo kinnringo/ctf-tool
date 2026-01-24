@@ -256,6 +256,19 @@ ipcMain.handle('forensics-scan', async (event, base64Data) => {
     }
 });
 
+ipcMain.handle('forensics-metadata', async (event, { base64Data, filePath }) => {
+    try {
+        const response = await fetch(`${PY_URL}/forensics/metadata`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: base64Data, file_path: filePath })
+        });
+        return await response.json();
+    } catch (e: any) {
+        return { error: e.message };
+    }
+});
+
 // --- Workspace IPC Handlers ---
 
 interface TreeNode {

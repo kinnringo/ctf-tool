@@ -18,6 +18,7 @@ declare global {
                 calculateEntropy: (base64Data: string) => Promise<any>;
                 calculateEntropyGraph: (base64Data: string) => Promise<any>;
                 scanFile: (base64Data: string) => Promise<any>;
+                getMetadata: (base64Data: string, filePath?: string) => Promise<any>;
             };
             workspace: {
                 openFolder: () => Promise<any>;
