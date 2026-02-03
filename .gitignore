@@ -23,3 +23,7 @@ build_log.txt
 
 # User Specific
 others/
+
+# Large Files
+*.zip
+*.exe
