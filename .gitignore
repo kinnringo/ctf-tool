@@ -19,7 +19,10 @@ backend/__pycache__/
 .DS_Store
 Thumbs.db
 *.log
-build_log.txt
 
 # User Specific
 others/
+
+# Large Files
+*.zip
+*.exe
