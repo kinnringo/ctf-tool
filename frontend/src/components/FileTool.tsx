@@ -18,8 +18,10 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
     const [entropy, setEntropy] = useState<number | null>(null);
     const [entropyGraph, setEntropyGraph] = useState<number[] | null>(null);
     const [scanResults, setScanResults] = useState<any[] | null>(null);
+    const [metadata, setMetadata] = useState<any>(null);
     const [error, setError] = useState<string>('');
     const [pendingBase64, setPendingBase64] = useState<string | null>(null);
+    const [pendingFileObject, setPendingFileObject] = useState<File | null>(null); // To get path for DnD files
     const [isDragging, setIsDragging] = useState(false);
 
     // Hex Viewer state
@@ -51,32 +53,45 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
             setEntropy(null);
             setEntropyGraph(null);
             setScanResults(null);
+            setMetadata(null);
             setError('');
             setFileName(selectedFile.name);
             setPendingBase64(selectedFile.base64);
+            setPendingFileObject(null); // Workspace selection overrides pending file
         }
     }, [selectedFile]);
 
     const runAnalysis = async (base64Data: string) => {
         setError('');
         try {
+            // Determine file path for metadata
+            let filePath: string | undefined = undefined;
+            if (selectedFile) {
+                filePath = selectedFile.path;
+            } else if (pendingFileObject) {
+                // Try to get path from File object (Electron specific)
+                filePath = window.api.workspace.getPathForFile(pendingFileObject);
+            }
+
             const res = await window.api.forensics.analyzeFile(base64Data);
             if (res.error) {
                 setError(res.error);
             } else {
                 setResult(res);
 
-                const [strRes, entRes, graphRes, scanRes] = await Promise.all([
+                const [strRes, entRes, graphRes, scanRes, metaRes] = await Promise.all([
                     window.api.forensics.extractStrings(base64Data),
                     window.api.forensics.calculateEntropy(base64Data),
                     window.api.forensics.calculateEntropyGraph(base64Data),
-                    window.api.forensics.scanFile(base64Data)
+                    window.api.forensics.scanFile(base64Data),
+                    window.api.forensics.getMetadata(base64Data, filePath)
                 ]);
 
                 if (strRes.result) setStrings(strRes.result);
                 if (entRes.result !== undefined) setEntropy(entRes.result);
                 if (graphRes.result) setEntropyGraph(graphRes.result);
                 if (scanRes.result) setScanResults(scanRes.result);
+                if (metaRes.result) setMetadata(metaRes.result);
 
                 // Decode base64 to Uint8Array for Hex Viewer
                 const binaryString = atob(base64Data);
@@ -105,8 +120,10 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
         setEntropy(null);
         setEntropyGraph(null);
         setScanResults(null);
+        setMetadata(null);
         setError('');
         setPendingBase64(null);
+        setPendingFileObject(null);
         setHexData(null);
         setHexSearch('');
         setStringsSearch('');
@@ -362,7 +379,9 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
         setStrings(null);
         setEntropy(null);
         setEntropyGraph(null);
+        setEntropyGraph(null);
         setScanResults(null);
+        setMetadata(null);
         setFileName(file.name);
 
         const reader = new FileReader();
@@ -370,6 +389,7 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
             const content = reader.result as string;
             const base64Raw = content.split(',')[1];
             setPendingBase64(base64Raw);
+            setPendingFileObject(file);
         };
         reader.readAsDataURL(file);
     };
@@ -529,6 +549,65 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
                             )}
                         </tbody>
                     </table>
+
+                    {metadata && (
+                        <div style={{ marginTop: '30px' }}>
+                            <h4>Metadata</h4>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+                                <tbody>
+                                    {metadata.hashes && (
+                                        <>
+                                            <tr style={{ background: '#333', color: '#fff' }}><td colSpan={2} style={{ padding: '4px' }}><strong>Hashes</strong></td></tr>
+                                            <tr><td style={{ padding: '4px', width: '100px' }}>MD5</td><td style={{ padding: '4px', fontFamily: 'monospace' }}>{metadata.hashes.md5}</td></tr>
+                                            <tr><td style={{ padding: '4px' }}>SHA1</td><td style={{ padding: '4px', fontFamily: 'monospace' }}>{metadata.hashes.sha1}</td></tr>
+                                            <tr><td style={{ padding: '4px' }}>SHA256</td><td style={{ padding: '4px', fontFamily: 'monospace', wordBreak: 'break-all' }}>{metadata.hashes.sha256}</td></tr>
+                                        </>
+                                    )}
+                                    {metadata.timestamps && Object.keys(metadata.timestamps).length > 0 && (
+                                        <>
+                                            <tr style={{ background: '#333', color: '#fff' }}><td colSpan={2} style={{ padding: '4px' }}><strong>Timestamps (OS Dependent)</strong></td></tr>
+                                            {Object.entries(metadata.timestamps).map(([key, val]) => (
+                                                <tr key={key}>
+                                                    <td style={{ padding: '4px', textTransform: 'capitalize' }}>{key}</td>
+                                                    <td style={{ padding: '4px' }}>{String(val)}</td>
+                                                </tr>
+                                            ))}
+                                        </>
+                                    )}
+                                    {metadata.format_specific && (
+                                        <>
+                                            <tr style={{ background: '#333', color: '#fff' }}>
+                                                <td colSpan={2} style={{ padding: '4px' }}>
+                                                    <strong>Format Specific ({metadata.format_specific.type})</strong>
+                                                </td>
+                                            </tr>
+                                            {Object.entries(metadata.format_specific.data).map(([key, val]) => {
+                                                if (key === 'exif') return null; // Handle Exif separately at the end
+                                                return (
+                                                    <tr key={key}>
+                                                        <td style={{ padding: '4px', textTransform: 'capitalize' }}>{key}</td>
+                                                        <td style={{ padding: '4px' }}>{String(val)}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {/* Special handling for Exif if present */}
+                                            {metadata.format_specific.data.exif && Object.keys(metadata.format_specific.data.exif).length > 0 && (
+                                                <>
+                                                    <tr style={{ background: '#444', color: '#ddd' }}><td colSpan={2} style={{ padding: '4px', paddingLeft: '20px' }}><em>Exif Data</em></td></tr>
+                                                    {Object.entries(metadata.format_specific.data.exif).map(([k, v]) => (
+                                                        <tr key={k}>
+                                                            <td style={{ padding: '4px', paddingLeft: '20px', fontSize: '0.9em' }}>{k}</td>
+                                                            <td style={{ padding: '4px', fontSize: '0.9em', wordBreak: 'break-word' }}>{String(v)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </>
+                                            )}
+                                        </>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
                     {entropyGraph && (
                         <div style={{ marginTop: '30px' }}>

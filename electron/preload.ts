@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('api', {
         calculateEntropy: (base64Data: string) => ipcRenderer.invoke('forensics-entropy', base64Data),
         calculateEntropyGraph: (base64Data: string) => ipcRenderer.invoke('forensics-entropy-graph', base64Data),
         scanFile: (base64Data: string) => ipcRenderer.invoke('forensics-scan', base64Data),
+        getMetadata: (base64Data: string, filePath?: string) => ipcRenderer.invoke('forensics-metadata', { base64Data, filePath }),
     },
     workspace: {
         openFolder: () => ipcRenderer.invoke('workspace-open-folder'),

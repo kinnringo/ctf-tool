@@ -67,10 +67,19 @@ function startPythonSubprocess() {
 }
 
 // Kill Python Backend
+// Kill Python Backend
 function killPythonSubprocess() {
     if (pythonProcess) {
         console.log('Killing Python process...');
-        pythonProcess.kill();
+        if (process.platform === 'win32') {
+            try {
+                child_process.execSync(`taskkill /pid ${pythonProcess.pid} /f /t`);
+            } catch (e) {
+                console.error('Failed to kill python process:', e);
+            }
+        } else {
+            pythonProcess.kill();
+        }
         pythonProcess = null;
     }
 }
@@ -92,7 +101,6 @@ async function createWindow() {
     if (isDev) {
         // Wait for Vite to be ready? usually concurrently handles this or we just retry
         await mainWindow.loadURL('http://localhost:5173');
-        mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, '..', '..', 'frontend', 'dist', 'index.html'));
     }
@@ -241,6 +249,19 @@ ipcMain.handle('forensics-scan', async (event, base64Data) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: base64Data })
+        });
+        return await response.json();
+    } catch (e: any) {
+        return { error: e.message };
+    }
+});
+
+ipcMain.handle('forensics-metadata', async (event, { base64Data, filePath }) => {
+    try {
+        const response = await fetch(`${PY_URL}/forensics/metadata`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: base64Data, file_path: filePath })
         });
         return await response.json();
     } catch (e: any) {
