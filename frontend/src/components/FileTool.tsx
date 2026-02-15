@@ -222,7 +222,7 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
 
         return (
             <div style={{ display: 'flex', gap: '5px' }}>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                         <span style={{ color: '#aaa', fontSize: '0.85rem' }}>
                             Total: {hexData.length} bytes ({(hexData.length / 1024).toFixed(2)} KB)
@@ -304,7 +304,7 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
 
         return (
             <div style={{ display: 'flex', gap: '5px' }}>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                         <input
                             type="text"
@@ -331,6 +331,7 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
                             padding: '10px',
                             height: `${stringsHeight}px`,
                             overflowY: 'auto',
+                            overflowX: 'auto',
                             border: '1px solid #444',
                             borderRadius: '5px',
                             fontFamily: 'monospace',
@@ -345,7 +346,7 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
                                     key={idx}
                                     id={`string-line-${idx}`}
                                     style={{
-                                        whiteSpace: 'pre-wrap',
+                                        whiteSpace: 'pre',
                                         background: isCurrentMatch ? 'rgba(255, 255, 0, 0.2)' : 'transparent'
                                     }}
                                 >
@@ -516,39 +517,67 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
                 <div style={{ marginTop: '20px' }}>
                     <h3 style={{ textAlign: 'center' }}>Analysis Result</h3>
 
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-                        <thead>
-                            <tr style={{ background: '#e0e0e0', color: '#000', textAlign: 'left' }}>
-                                <th style={{ padding: '8px' }}>Property</th>
-                                <th style={{ padding: '8px' }}>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style={{ borderBottom: '1px solid #444' }}>
-                                <td style={{ padding: '8px' }}>File Type</td>
-                                <td style={{ padding: '8px' }}>{result.file_type || 'Unknown'}</td>
-                            </tr>
-                            <tr style={{ borderBottom: '1px solid #444' }}>
-                                <td style={{ padding: '8px' }}>Size</td>
-                                <td style={{ padding: '8px' }}>{result.size} bytes</td>
-                            </tr>
-                            <tr style={{ borderBottom: '1px solid #444' }}>
-                                <td style={{ padding: '8px' }}>Magic Number</td>
-                                <td style={{ padding: '8px', fontFamily: 'monospace' }}>{result.magic_hex}</td>
-                            </tr>
-                            {entropy !== null && (
-                                <tr style={{ borderBottom: '1px solid #444' }}>
-                                    <td style={{ padding: '8px' }}>Entropy</td>
-                                    <td style={{ padding: '8px' }}>
-                                        {entropy.toFixed(4)}
-                                        <span style={{ marginLeft: '10px', color: entropy > 7.5 ? '#f55' : (entropy > 6 ? '#fa0' : '#5f5') }}>
-                                            {entropy > 7.5 ? '(Very High - likely encrypted/compressed)' : (entropy > 6 ? '(High)' : '(Normal)')}
-                                        </span>
-                                    </td>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+                            <thead>
+                                <tr style={{ background: '#e0e0e0', color: '#000', textAlign: 'left' }}>
+                                    <th style={{ padding: '8px' }}>Property</th>
+                                    <th style={{ padding: '8px' }}>Value</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <tr style={{ borderBottom: '1px solid #444' }}>
+                                    <td style={{ padding: '8px' }}>File Type</td>
+                                    <td style={{ padding: '8px' }}>{result.matches && result.matches.length > 0 ? result.matches[0].name : 'Unknown'}</td>
+                                </tr>
+                                <tr style={{ borderBottom: '1px solid #444' }}>
+                                    <td style={{ padding: '8px' }}>Size</td>
+                                    <td style={{ padding: '8px' }}>{result.size} bytes</td>
+                                </tr>
+                                <tr style={{ borderBottom: '1px solid #444' }}>
+                                    <td style={{ padding: '8px' }}>Magic Number</td>
+                                    <td style={{ padding: '8px', fontFamily: 'monospace', wordBreak: 'break-all' }}>{result.hex_preview}</td>
+                                </tr>
+                                {entropy !== null && (
+                                    <tr style={{ borderBottom: '1px solid #444' }}>
+                                        <td style={{ padding: '8px' }}>Entropy</td>
+                                        <td style={{ padding: '8px' }}>
+                                            {entropy.toFixed(4)}
+                                            <span style={{ marginLeft: '10px', color: entropy > 7.5 ? '#f55' : (entropy > 6 ? '#fa0' : '#5f5') }}>
+                                                {entropy > 7.5 ? '(Very High - likely encrypted/compressed)' : (entropy > 6 ? '(High)' : '(Normal)')}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {result.matches && result.matches.length > 0 && (
+                        <div style={{ marginTop: '20px' }}>
+                            <h4>File Type Detection ({result.detection_count} match{result.detection_count !== 1 ? 'es' : ''})</h4>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+                                <thead>
+                                    <tr style={{ background: '#e0e0e0', color: '#000', textAlign: 'left' }}>
+                                        <th style={{ padding: '8px' }}>Name</th>
+                                        <th style={{ padding: '8px' }}>Extension</th>
+                                        <th style={{ padding: '8px' }}>MIME Type</th>
+                                        <th style={{ padding: '8px' }}>Offset</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {result.matches.map((m: any, idx: number) => (
+                                        <tr key={idx} style={{ borderBottom: '1px solid #444' }}>
+                                            <td style={{ padding: '8px', wordBreak: 'break-word' }}>{m.name}</td>
+                                            <td style={{ padding: '8px', fontFamily: 'monospace', wordBreak: 'break-all' }}>{m.extension}</td>
+                                            <td style={{ padding: '8px', fontFamily: 'monospace', wordBreak: 'break-all' }}>{m.mime}</td>
+                                            <td style={{ padding: '8px' }}>{m.offset}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
                     {metadata && (
                         <div style={{ marginTop: '30px' }}>
@@ -627,26 +656,28 @@ const FileTool = ({ selectedFile, onClearSelection }: FileToolProps) => {
                     {scanResults && scanResults.length > 0 && (
                         <div style={{ marginTop: '30px' }}>
                             <h4>Embedded Structures ({scanResults.length})</h4>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-                                <thead>
-                                    <tr style={{ background: '#e0e0e0', color: '#000', textAlign: 'left' }}>
-                                        <th style={{ padding: '8px' }}>Offset (Hex)</th>
-                                        <th style={{ padding: '8px' }}>Offset (Dec)</th>
-                                        <th style={{ padding: '8px' }}>Type</th>
-                                        <th style={{ padding: '8px' }}>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {scanResults.map((s: any, idx: number) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #444' }}>
-                                            <td style={{ padding: '8px', fontFamily: 'monospace' }}>{s.offset_hex}</td>
-                                            <td style={{ padding: '8px' }}>{s.offset}</td>
-                                            <td style={{ padding: '8px' }}>{s.name}</td>
-                                            <td style={{ padding: '8px', color: '#888' }}>{s.description}</td>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+                                    <thead>
+                                        <tr style={{ background: '#e0e0e0', color: '#000', textAlign: 'left' }}>
+                                            <th style={{ padding: '8px' }}>Offset (Hex)</th>
+                                            <th style={{ padding: '8px' }}>Offset (Dec)</th>
+                                            <th style={{ padding: '8px' }}>Type</th>
+                                            <th style={{ padding: '8px' }}>Description</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {scanResults.map((s: any, idx: number) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #444' }}>
+                                                <td style={{ padding: '8px', fontFamily: 'monospace' }}>{s.offset_hex}</td>
+                                                <td style={{ padding: '8px' }}>{s.offset}</td>
+                                                <td style={{ padding: '8px' }}>{s.name}</td>
+                                                <td style={{ padding: '8px', color: '#888', wordBreak: 'break-word' }}>{s.description}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 
