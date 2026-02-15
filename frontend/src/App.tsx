@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import Base64Tool from './components/Base64Tool';
+import CryptoTool from './components/CryptoTool';
 import StegoTool from './components/StegoTool';
 import FileTool from './components/FileTool';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
@@ -143,7 +143,7 @@ function App() {
             </button>
           </div>
 
-          {activeTab === 'crypto' && <Base64Tool />}
+          {activeTab === 'crypto' && <CryptoTool />}
           {activeTab === 'stego' && <StegoTool />}
           {activeTab === 'file' && <FileTool selectedFile={selectedFile} onClearSelection={() => setSelectedFile(null)} />}
         </div>
